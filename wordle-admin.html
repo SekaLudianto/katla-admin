@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <!-- ... (head content sama) ... -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Database Katla</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ... (styles sama) ... */
+        body { font-family: 'Inter', sans-serif; background-color: #111827; }
+        .form-input { background-color: #374151; border-color: #4b5563; color: white; }
+        .form-input:focus { background-color: #4b5563; border-color: #67e8f9; ring-color: #67e8f9; }
+        .btn { background-color: #0e7490; color: white; transition: background-color 0.3s; }
+        .btn:hover { background-color: #0c4a6e; }
+        .btn-red { background-color: #dc2626; }
+        .btn-red:hover { background-color: #991b1b; }
+        .btn-green { background-color: #059669; }
+        .btn-green:hover { background-color: #047857; }
+        .btn-yellow { background-color: #d97706; }
+        .btn-yellow:hover { background-color: #b45309; }
+        .btn:disabled { background-color: #4b5563; cursor: not-allowed; }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <!-- Kontainer Login -->
+    <!-- ... (HTML login sama) ... -->
+    <div id="login-container" class="min-h-screen flex items-center justify-center">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-sm">
+            <h2 class="text-2xl font-bold text-center text-white mb-6">Admin Login</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                    <input type="email" id="login-email" required class="w-full px-3 py-2 rounded-md form-input focus:outline-none focus:ring-2">
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                    <input type="password" id="login-password" required class="w-full px-3 py-2 rounded-md form-input focus:outline-none focus:ring-2">
+                </div>
+                <button type="submit" class="w-full btn font-semibold py-2 rounded-md">Login</button>
+                <p id="login-error" class="text-red-500 text-sm mt-4 text-center"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Kontainer Dashboard Admin (Hidden by default) -->
+    <div id="admin-dashboard" class="hidden max-w-7xl mx-auto p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-white">Admin Panel Katla</h1>
+            <button id="logout-button" class="btn-red font-semibold py-2 px-4 rounded-md">Logout</button>
+        </div>
+        
+        <p class="text-gray-400 mb-2">Login sebagai: <span id="admin-email" class="font-medium text-cyan-400"></span></p>
+
+        <!-- [BARU] Panel Kontrol Game -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg mt-8">
+            <h2 class="text-2xl font-semibold text-white mb-4">Kontrol Permainan (LIVE)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Set Kata Rahasia -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-medium">Set Kata Berikutnya</h3>
+                    <input type="text" id="next-word" class="w-full px-3 py-2 rounded-md form-input" placeholder="KATA (5 HURUF)" maxlength="5">
+                    <textarea id="next-word-arti" class="w-full px-3 py-2 rounded-md form-input" rows="2" placeholder="Arti dari kata..."></textarea>
+                    <button id="set-word-button" class="w-full btn font-semibold py-2 rounded-md">Set Kata</button>
+                    <p class="text-xs text-gray-400">Kata berikutnya: <strong id="current-next-word" class="text-yellow-400">...</strong></p>
+                </div>
+                
+                <!-- Jeda & Lewati -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium">Kontrol Status</h3>
+                    <button id="pause-button" class="w-full btn-yellow font-semibold py-2 rounded-md">...</button>
+                    <button id="skip-button" class="w-full btn-red font-semibold py-2 rounded-md">Lewati Game (Mulai Baru)</button>
+                    <p class="text-sm text-gray-400 text-center">Status Game: <strong id="pause-status" class="text-white">...</strong></p>
+                    <!-- [BARU] Tampilkan kata aktif -->
+                    <p class="text-sm text-gray-400 text-center mt-2">Kata Aktif: <strong id="active-word" class="text-cyan-400">...</strong></p>
+                </div>
+
+                <!-- Input Manual (Filter) -->
+                <div class="space-y-3">
+                     <h3 class="text-lg font-medium">Input Manual (Kena Filter)</h3>
+                    <input type="text" id="manual-word" class="w-full px-3 py-2 rounded-md form-input" placeholder="KATA (misal: KONTOL)">
+                    <input type="text" id="manual-user" class="w-full px-3 py-2 rounded-md form-input" placeholder="Username (misal: user123)">
+                    <button id="manual-submit-button" class="w-full btn-green font-semibold py-2 rounded-md">Kirim Tebakan Manual</button>
+                    <p class="text-xs text-gray-400">Fitur ini mengirim tebakan ke game atas nama user.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+            <!-- Form Tambah Kata -->
+            <!-- ... (HTML Form Tambah Kata sama) ... -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-white mb-4">Tambah Kata Baru</h2>
+                <form id="add-word-form">
+                    <div class="mb-4">
+                        <label for="word" class="block text-sm font-medium text-gray-300 mb-2">Kata <span class="text-red-400">(Wajib)</span></label>
+                        <input type="text" id="form-word" required class="w-full px-3 py-2 rounded-md form-input focus:outline-none focus:ring-2" placeholder="Contoh: ABADI">
+                    </div>
+                    <div class="mb-4">
+                        <label for="arti" class="block text-sm font-medium text-gray-300 mb-2">Arti <span class="text-red-400">(Wajib)</span></label>
+                        <textarea id="form-arti" required rows="3" class="w-full px-3 py-2 rounded-md form-input focus:outline-none focus:ring-2" placeholder="Definisi kata..."></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="contoh" class="block text-sm font-medium text-gray-300 mb-2">Contoh Kalimat</label>
+                        <input type="text" id="form-contoh" class="w-full px-3 py-2 rounded-md form-input focus:outline-none focus:ring-2" placeholder="Contoh penggunaan...">
+                    </div>
+                    <div class="mb-4">
+                        <label for="bahasa" class="block text-sm font-medium text-gray-300 mb-2">Bahasa (Opsional)</label>
+                        <input type="text" id="form-bahasa" class="w-full px-3 py-2 rounded-md form-input focus:outline-none focus:ring-2" placeholder="Misal: Jawa, Sunda">
+                    </div>
+                    <button type="submit" class="w-full btn font-semibold py-2 rounded-md">Tambah Kata</button>
+                </form>
+            </div>
+
+            <!-- Import JSON -->
+            <!-- ... (HTML Import JSON sama) ... -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-white mb-4">Import dari JSON</h2>
+                <p class="text-gray-400 text-sm mb-4">Upload file JSON dengan format: <br> `[{ "word": "KATA", "arti": "...", ... }, ...]`</p>
+                <div class="mb-4">
+                    <label for="json-file" class="block text-sm font-medium text-gray-300 mb-2">Pilih File JSON</label>
+                    <input type="file" id="json-file" accept=".json" class="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-cyan-700 file:text-white hover:file:bg-cyan-800">
+                </div>
+                <button id="import-button" class="w-full btn font-semibold py-2 rounded-md">Import Data</button>
+            </div>
+        </div>
+
+        <!-- [BARU] Reset Leaderboard -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg mt-8 border border-red-700/50">
+            <h2 class="text-2xl font-semibold text-red-400 mb-4">Zona Berbahaya</h2>
+            <p class="text-gray-400 text-sm mb-4">Tindakan ini akan menghapus seluruh data poin dan kemenangan di leaderboard. Tindakan ini tidak dapat dibatalkan.</p>
+            <button id="reset-leaderboard-button" class="w-full btn-red font-semibold py-2 rounded-md">Reset Seluruh Leaderboard</button>
+        </div>
+        
+        <div id="status-message" class="mt-6 text-center text-lg h-6"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword, 
+            onAuthStateChanged, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            writeBatch,
+            onSnapshot, 
+            updateDoc,
+            collection, // [BARU]
+            getDocs, // [BARU]
+            getDoc // [BARU]
+        } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+        // Konfigurasi Firebase Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmkg2rZNL0D_lpF2QMZmgle4ASTrIT_r0",
+            authDomain: "kuis-tiktok-c9272.firebaseapp.com",
+            projectId: "kuis-tiktok-c9272",
+            storageBucket: "kuis-tiktok-c9272.firebasestorage.app",
+            messagingSenderId: "534386964257",
+            appId: "1:534386964257:web:c3ea209d1ca8ecbcbaf060",
+            measurementId: "G-EPXM197FME"
+        };
+
+        // Inisialisasi Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Elemen UI
+        const loginContainer = document.getElementById('login-container');
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const adminEmail = document.getElementById('admin-email');
+        const logoutButton = document.getElementById('logout-button');
+        const addWordForm = document.getElementById('add-word-form');
+        const importButton = document.getElementById('import-button');
+        const jsonFileInput = document.getElementById('json-file');
+        const statusMessage = document.getElementById('status-message');
+
+        // [BARU] Elemen Kontrol Game
+        const pauseButton = document.getElementById('pause-button');
+        const pauseStatus = document.getElementById('pause-status');
+        const skipButton = document.getElementById('skip-button');
+        const nextWordInput = document.getElementById('next-word');
+        const nextWordArtiInput = document.getElementById('next-word-arti');
+        const setWordButton = document.getElementById('set-word-button');
+        const currentNextWord = document.getElementById('current-next-word');
+        const manualWordInput = document.getElementById('manual-word');
+        const manualUserInput = document.getElementById('manual-user');
+        const manualSubmitButton = document.getElementById('manual-submit-button');
+        const activeWordEl = document.getElementById('active-word'); // [BARU]
+        const resetLeaderboardButton = document.getElementById('reset-leaderboard-button'); // [BARU]
+
+        // Referensi Dokumen Kontrol
+        const controlRef = doc(db, "gameControl", "liveState");
+        let currentGameControlState = {}; // Cache state
+
+        // Cek status login
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User login
+                adminEmail.textContent = user.email;
+                loginContainer.classList.add('hidden');
+                adminDashboard.classList.remove('hidden');
+                
+                // [BARU] Mulai dengarkan status game
+                listenToGameControl();
+            } else {
+                // User logout
+                loginContainer.classList.remove('hidden');
+                adminDashboard.classList.add('hidden');
+            }
+        });
+
+        // [BARU] Dengarkan status game dari Firestore
+        function listenToGameControl() {
+            onSnapshot(controlRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentGameControlState = data; // Simpan state
+                    
+                    // Update UI Jeda/Lanjutkan
+                    if (data.isPaused) {
+                        pauseStatus.textContent = "DIJEDA";
+                        pauseStatus.style.color = "#f87171"; // Merah
+                        pauseButton.textContent = "Lanjutkan Permainan";
+                        pauseButton.classList.remove('btn-yellow');
+                        pauseButton.classList.add('btn-green');
+                        activeWordEl.textContent = "(DIJEDA)"; // [BARU]
+                    } else {
+                        pauseStatus.textContent = "BERJALAN";
+                        pauseStatus.style.color = "#34d399"; // Hijau
+                        pauseButton.textContent = "Jeda Permainan";
+                        pauseButton.classList.remove('btn-green');
+                        pauseButton.classList.add('btn-yellow');
+                        
+                        // [BARU] Update Kata Aktif
+                        activeWordEl.textContent = data.activeWord ? data.activeWord : "(Menunggu)";
+                    }
+
+                    // Update UI Kata Berikutnya
+                    if (data.nextWord && !data.nextWordUsed) {
+                        currentNextWord.textContent = `${data.nextWord} (Menunggu game baru)`;
+                        nextWordInput.value = data.nextWord;
+                        nextWordArtiInput.value = data.nextWordArti;
+                    } else {
+                        currentNextWord.textContent = "Acak (Default)";
+                        if (document.activeElement !== nextWordInput && document.activeElement !== nextWordArtiInput) {
+                            // Hanya reset jika user tidak sedang mengetik
+                            nextWordInput.value = "";
+                            nextWordArtiInput.value = "";
+                        }
+                    }
+                } else {
+                    // Dokumen belum ada, buat default
+                    setDoc(controlRef, {
+                        isPaused: false,
+                        forceSkip: 0,
+                        nextWord: "",
+                        nextWordArti: "",
+                        nextWordUsed: true,
+                        manualGuess: { word: "", user: "", timestamp: 0 },
+                        activeWord: "" // [BARU]
+                    });
+                }
+            });
+        }
+
+        // [BARU] Handle Tombol Kontrol
+        pauseButton.addEventListener('click', () => {
+            updateDoc(controlRef, {
+                isPaused: !currentGameControlState.isPaused // Toggle
+            });
+        });
+
+        skipButton.addEventListener('click', () => {
+            // [DIUBAH] Tidak perlu konfirmasi
+            updateDoc(controlRef, {
+                forceSkip: new Date().getTime(), // Kirim timestamp baru
+                nextWordUsed: true // Hapus juga kata rahasia jika ada
+            });
+        });
+
+        setWordButton.addEventListener('click', async () => {
+            const word = nextWordInput.value.trim().toUpperCase();
+            const arti = nextWordArtiInput.value.trim();
+
+            if (word.length !== 5) {
+                setStatus("Kata rahasia harus 5 huruf.", true);
+                return;
+            }
+            if (!arti) {
+                setStatus("Arti kata tidak boleh kosong.", true);
+                return;
+            }
+            
+            // Cek dulu apakah kata ada di DB
+            const wordRef = doc(db, "words", word);
+            const docSnap = await getDoc(wordRef);
+            if (!docSnap.exists()) {
+                // [DIUBAH] Gunakan prompt custom
+                const addWordConfirm = prompt(`Kata "${word}" tidak ada di database. Ketik 'TAMBAH' untuk menambahkannya dan mengaturnya.`);
+                if (addWordConfirm !== 'TAMBAH') {
+                    setStatus("Set kata dibatalkan.", true);
+                    return;
+                }
+                // Tambahkan kata ke DB
+                await setDoc(wordRef, {
+                    word: word,
+                    arti: arti,
+                    contoh: "",
+                    bahasa: "",
+                    length: word.length
+                });
+            }
+
+            // Set kata di kontrol game
+            await updateDoc(controlRef, {
+                nextWord: word,
+                nextWordArti: arti,
+                nextWordUsed: false // Tandai sebagai "siap dipakai"
+            });
+            setStatus(`Kata rahasia berikutnya diatur ke "${word}"`, false);
+        });
+
+        manualSubmitButton.addEventListener('click', () => {
+            const word = manualWordInput.value.trim().toUpperCase();
+            const user = manualUserInput.value.trim();
+
+            if (word.length !== 5) {
+                setStatus("Kata manual harus 5 huruf.", true);
+                return;
+            }
+            if (!user) {
+                setStatus("Username manual tidak boleh kosong.", true);
+                return;
+            }
+            
+            updateDoc(controlRef, {
+                manualGuess: {
+                    word: word,
+                    user: user,
+                    timestamp: new Date().getTime() // Kirim timestamp baru
+                }
+            });
+            setStatus(`Tebakan manual "${word}" dari "${user}" dikirim!`, false);
+            manualWordInput.value = "";
+            manualUserInput.value = "";
+        });
+
+        // [BARU] Handle Reset Leaderboard
+        resetLeaderboardButton.addEventListener('click', async () => {
+            const confirmation = prompt("PERINGATAN: Ini akan menghapus SEMUA data leaderboard (poin dan kemenangan). \n\nTindakan ini tidak dapat dibatalkan. Untuk konfirmasi, ketik 'RESET'");
+            
+            if (confirmation !== "RESET") {
+                setStatus("Reset dibatalkan.", true);
+                return;
+            }
+
+            setStatus("Mereset leaderboard... (Jangan tutup halaman)", false);
+            resetLeaderboardButton.disabled = true;
+
+            try {
+                const leaderboardCollection = collection(db, "leaderboard");
+                const snapshot = await getDocs(leaderboardCollection);
+                
+                if (snapshot.empty) {
+                    setStatus("Leaderboard sudah kosong.", false);
+                    resetLeaderboardButton.disabled = false;
+                    return;
+                }
+
+                // Hapus dalam batch 500
+                let batch = writeBatch(db);
+                let count = 0;
+                for (const doc of snapshot.docs) {
+                    batch.delete(doc.ref);
+                    count++;
+                    if (count % 500 === 0) {
+                        await batch.commit();
+                        batch = writeBatch(db);
+                    }
+                }
+                await batch.commit(); // Commit sisa batch
+
+                setStatus(`Reset berhasil! ${snapshot.size} data pengguna dihapus.`, false);
+
+            } catch (error) {
+                console.error("Error resetting leaderboard:", error);
+                setStatus(`Gagal mereset: ${error.message}`, true);
+            }
+
+            resetLeaderboardButton.disabled = false;
+        });
+
+
+        // Handle Login
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    loginError.textContent = '';
+                })
+                .catch((error) => {
+                    console.error("Login failed:", error);
+                    loginError.textContent = "Email atau password salah.";
+                });
+        });
+
+        // Handle Logout
+        logoutButton.addEventListener('click', () => {
+            signOut(auth).catch((error) => console.error("Logout failed:", error));
+        });
+
+        // Handle Tambah Kata Manual
+        addWordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const word = document.getElementById('form-word').value.trim().toUpperCase();
+            const arti = document.getElementById('form-arti').value.trim();
+            const contoh = document.getElementById('form-contoh').value.trim();
+            const bahasa = document.getElementById('form-bahasa').value.trim();
+
+            if (!word || !arti) {
+                setStatus("Kata dan Arti tidak boleh kosong.", true);
+                return;
+            }
+
+            setStatus("Menambahkan kata...", false);
+            try {
+                const wordRef = doc(db, "words", word);
+                await setDoc(wordRef, {
+                    word: word,
+                    arti: arti,
+                    contoh: contoh,
+                    bahasa: bahasa,
+                    length: word.length // Simpan panjang kata untuk query
+                });
+                setStatus(`Kata "${word}" berhasil ditambahkan!`, false);
+                addWordForm.reset();
+            } catch (error) {
+                console.error("Error adding document:", error);
+                setStatus(`Gagal menambahkan kata: ${error.message}`, true);
+            }
+        });
+
+        // Handle Import JSON
+        importButton.addEventListener('click', () => {
+            const file = jsonFileInput.files[0];
+            if (!file) {
+                setStatus("Pilih file JSON terlebih dahulu.", true);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (!Array.isArray(data)) {
+                        throw new Error("Format JSON harus berupa array.");
+                    }
+
+                    setStatus(`Mengimpor ${data.length} kata... (Jangan tutup halaman)`, false);
+                    
+                    let batch = writeBatch(db);
+                    let count = 0;
+
+                    for (const item of data) {
+                        const word = item.word ? item.word.trim().toUpperCase() : null;
+                        const arti = item.arti ? item.arti.trim() : null;
+
+                        if (!word || !arti) {
+                            console.warn("Melewatkan item (word/arti kosong):", item);
+                            continue;
+                        }
+
+                        const wordRef = doc(db, "words", word);
+                        const wordData = {
+                            word: word,
+                            arti: arti,
+                            contoh: item.contoh || "",
+                            bahasa: item.bahasa || "",
+                            length: word.length
+                        };
+                        
+                        batch.set(wordRef, wordData);
+                        count++;
+
+                        if (count % 500 === 0) {
+                            await batch.commit();
+                            batch = writeBatch(db);
+                            setStatus(`... ${count} / ${data.length} kata telah diimpor ...`, false);
+                        }
+                    }
+
+                    await batch.commit();
+                    setStatus(`Impor selesai! ${count} kata berhasil diproses.`, false);
+                    jsonFileInput.value = '';
+
+                } catch (error) {
+                    console.error("Error importing JSON:", error);
+                    setStatus(`Gagal mengimpor: ${error.message}`, true);
+                }
+            };
+            
+            reader.readAsText(file);
+        });
+                
+        function setStatus(message, isError) {
+            statusMessage.textContent = message;
+            statusMessage.style.color = isError ? '#f87171' : '#f43f5e';
+            setTimeout(() => statusMessage.textContent = '', 5000);
+        }
+
+    </script>
+
+</body>
+</html>
